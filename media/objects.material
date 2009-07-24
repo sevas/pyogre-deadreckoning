@@ -1,0 +1,59 @@
+material Objects/Ball
+{
+  technique
+  {
+    pass
+    {
+      shading phong
+      
+      ambient 0.7 0.2 0.2 0.5
+      diffuse  0.5 0.5 0.5
+      specular  1.0 1.0 1.0 50
+      //emissive 0.3 0.3 0.3 0.5
+    }
+    
+  }
+}
+
+material Objects/DynamicLine
+{
+	technique
+	{
+		pass
+		{
+			lighting on
+			ambient 0.5  0.14  0.8   1.0
+			diffuse 0.5 0.5 0.5 1.0
+			
+		}
+	}
+}
+
+
+
+material Objects/DynamicLinePoint
+{
+	technique
+	{
+		pass
+		{
+			lighting on
+			diffuse 0.5   0.5   0.5   1.0
+			ambient 0.0 0.7 0.7 1.0
+			
+		}
+	}
+}
+
+material Objects/Spline
+{
+	technique
+	{
+		pass
+		{
+			lighting on
+			diffuse 0.5   0.5   0.5   1.0
+			ambient 1.0 0.26 0.0 1.0
+		}
+	}
+}

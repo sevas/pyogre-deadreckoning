@@ -1,0 +1,47 @@
+material WorldGrid/XAxis
+{
+  technique
+  {
+    pass
+    {
+	lighting off
+      	ambient vertexcolour
+    }
+  }
+}
+
+material WorldGrid/YAxis
+{
+  technique
+  {
+    pass
+    {
+     lighting off
+      ambient vertexcolour
+    }
+  }
+}
+
+material WorldGrid/ZAxis
+{
+  technique
+  {
+    pass
+    {
+        lighting off
+      ambient vertexcolour
+    }
+  }
+}
+
+material WorldGrid/Lines
+{
+  technique
+  {
+    pass
+    {
+      lighting off
+      ambient vertexcolour
+    }
+  }
+}
