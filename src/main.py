@@ -9,6 +9,41 @@ import ogre.io.OIS as OIS
 
 random.seed()
 
+
+def add_vectors(v1, v2):
+    """
+    
+    Paramters:
+    - `v1`: 
+    - `v2`: 
+    """
+    return op_vectors(operator.add, v1, v2)
+
+def sub_vectors(v1, v2):
+    return op_vectors(operator.sub, v1, v2)
+
+
+def op_vectors(op, v1, v2):
+    return map(op, v1, v2)
+
+
+def op_vector(op, v):
+    return map(op, v)
+
+
+def mul_vector(v, s):
+    return (s*v[0], s*v[1], s*v[2])
+    
+
+
+def derive(v1, v2, dt):
+	return (float(v1[0]-v2[0]) / dt,
+		float(v1[1]-v2[1]) / dt,
+                float(v1[2]-v2[2]) / dt
+                )
+
+
+
 class PathListener(sf.FrameListener):
     "docstring for PathListener"
     def __init__(self, renderWindow, camera, dynamic_line):
@@ -23,11 +58,16 @@ class PathListener(sf.FrameListener):
                     "accel"  : (1, 1, 1)}
 
         self.points = [None] * 4
-        self.vars = {"x":(0,0,0,0), "y":(0,0,0,0) , "z":(0,0,0,0)}
+        self.p_old = (0,0,0)
+        self.v_old = (0.5, 0, 0.5)
+
+        self.p, self.v_p, self.a_p = None, None, None
+
         self.current_pos = (0, 0, 0)
         self.current_t = 0.0
         self.last_t = 0.0
 
+        self.vars = {"x":None, "y":None, "z":None}
         
         
 
@@ -47,10 +87,10 @@ class PathListener(sf.FrameListener):
 
 
             new_point = tuple(map(operator.add, last_point,
-                                  (random.uniform(-1, 1),
+                                  (3*random.uniform(-1, 1),
                                    #random.uniform(-1, 1),
                                    0,
-                                   random.uniform(-1, 1))))
+                                   3*random.uniform(-1, 1))))
 
             self.dynamic_line["vertices"].append(new_point)
 
@@ -64,35 +104,45 @@ class PathListener(sf.FrameListener):
 
 
             # update spline parameters
-            last_v = self.pdu["speed"]
-            v = self._get_speed_vector(last_point, new_point)
-            a = self._get_accel_vector(last_v, v)
+            # last_v = self.pdu["speed"]
+            # v = self._get_speed_vector(last_point, new_point)
+            # a = self._get_accel_vector(last_v, v)
+            # 
+            # self.pdu["speed"] = v
+            # self.pdu["accel"] = a
+            # 
+            # p0 = last_point
+            # p1 = map(operator.add, p0, v)
+            # p2 = map(operator.add, p0, map(operator.add, v,  map(lambda x:x*0.5, a)))
+            # p3 = map(operator.sub, p2, map(operator.add, v, a))
+            # 
+            # self._update_spline_parameters([p0, p1, p2, p3])
 
-            self.pdu["speed"] = v
-            self.pdu["accel"] = a
-            
-            p0 = last_point
-            p1 = map(operator.add, p0, v)
-            p2 = map(operator.add, p0, map(operator.add, v,  map(lambda x:x*0.5, a)))
-            p3 = map(operator.sub, p2, map(operator.add, v, a))
+            self.p = new_point#add_vectors(self.p_old, new_point)  #(random.randint(-2, 2), random.randint(-2, 2)))
+            self.v_p = (random.random(), 0, random.random())
+            self.a_p = (0,0,0)
 
-            self._update_spline_parameters([p0, p1, p2, p3])
+            points = self._predict_points(self.p_old, self.v_old, self.p, self.v_p, self.a_p, 0.5)
+
+            self._update_spline_parameters(points)
+            #plot(*make_spline(points, 100))
+            self.p_old, self.v_old = points[3], derive(points[3], points[2], 1)
+
+
+
             
             self.current_t = 0.0
 
-            print self.vars
+            
 
         else:
             #update spline
             last_pos = self.current_pos
-            #self.current_pos = (self._eval_func("x", self.current_t),
-            #                    #self._eval_func("y", self.current_t),
-            #                    0,
-            #                    self._eval_func("z", self.current_t))
+            self.current_pos = (self._eval_func("x", self.current_t),
+                                0,
+                                self._eval_func("z", self.current_t))
 
-            v, a = self.pdu["speed"], self.pdu["accel"]
-            self.current_pos = self._eval_mrua(last_pos, v, a)
-
+        
 
             spline_object = self.dynamic_line["spline_object"]
 
@@ -157,10 +207,22 @@ class PathListener(sf.FrameListener):
         """
         evaluates VAR(t), VAR being x, y or z
         """
-        
-        A, B, C, D = self.vars[var];
-        return A*t**3 + B*t**2 + C*t + D
+        if self.vars[var]:
+            A, B, C, D = self.vars[var];
+            return A*t**3 + B*t**2 + C*t + D
+        else:
+            return 0
     
+
+    def _predict_points(self, p_old, v_old, p, v_p, a_p, t):
+	"""
+	"""
+        print p_old, v_old, p, v_p, a_p
+	p1 = add_vectors(p_old, v_old)
+	p2 = add_vectors(add_vectors(p, mul_vector(v_p, t)), (.5*a_p[0]*t**2, .5*a_p[1]*t**2, 5*a_p[2]*t**2))
+	p3 = sub_vectors(p2, add_vectors(v_p, mul_vector(a_p, t)))
+	
+	return [p_old, p1, p2, p3]
 
 
 
