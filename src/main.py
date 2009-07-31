@@ -86,11 +86,13 @@ class PathListener(sf.FrameListener):
             last_point = self.dynamic_line["vertices"][last_index]
 
 
-            new_point = tuple(map(operator.add, last_point,
-                                  (3*random.uniform(-1, 1),
-                                   #random.uniform(-1, 1),
-                                   0,
-                                   3*random.uniform(-1, 1))))
+            new_point = add_vectors(last_point,
+                                    (3*random.uniform(-1, 1),
+                                     #random.uniform(-1, 1),
+                                     0,
+                                     3*random.uniform(-1, 1)))
+
+
 
             self.dynamic_line["vertices"].append(new_point)
 
@@ -103,30 +105,18 @@ class PathListener(sf.FrameListener):
 
 
 
-            # update spline parameters
-            # last_v = self.pdu["speed"]
-            # v = self._get_speed_vector(last_point, new_point)
-            # a = self._get_accel_vector(last_v, v)
-            # 
-            # self.pdu["speed"] = v
-            # self.pdu["accel"] = a
-            # 
-            # p0 = last_point
-            # p1 = map(operator.add, p0, v)
-            # p2 = map(operator.add, p0, map(operator.add, v,  map(lambda x:x*0.5, a)))
-            # p3 = map(operator.sub, p2, map(operator.add, v, a))
-            # 
-            # self._update_spline_parameters([p0, p1, p2, p3])
+
 
             self.p = new_point#add_vectors(self.p_old, new_point)  #(random.randint(-2, 2), random.randint(-2, 2)))
-            self.v_p = (random.random(), 0, random.random())
+
+            self.v_p = add_vectors(self.v_old, (random.uniform(-1,1)/100, 0, random.uniform(-1,1)/100))
             self.a_p = (0,0,0)
 
-            points = self._predict_points(self.p_old, self.v_old, self.p, self.v_p, self.a_p, 0.5)
+            points = self._predict_points(self.p_old, self.v_old, self.p, self.v_p, self.a_p, 1.0)
 
             self._update_spline_parameters(points)
             #plot(*make_spline(points, 100))
-            self.p_old, self.v_old = points[3], derive(points[3], points[2], 1)
+            self.p_old, self.v_old = points[3], (-self.v_p[0], 0, -self.v_p[1]) #derive(points[3], points[2], 1.0)
 
 
 
