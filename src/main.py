@@ -10,6 +10,12 @@ import ogre.io.OIS as OIS
 random.seed()
 
 
+
+cos, sin = math.cos, math.sin
+pi = math.pi
+
+
+
 def add_vectors(v1, v2):
     """
     
@@ -39,8 +45,20 @@ def mul_vector(v, s):
 def derive(v1, v2, dt):
 	return (float(v1[0]-v2[0]) / dt,
 		float(v1[1]-v2[1]) / dt,
-                float(v1[2]-v2[2]) / dt
-                )
+                float(v1[2]-v2[2]) / dt)
+
+
+
+y_rotation_matrix = [lambda phi:cos(phi) , lambda phi:0, lambda phi:sin(phi),
+                     lambda phi:0        , lambda phi:1, lambda phi:0,
+                     lambda phi:-sin(phi), lambda phi:0, lambda phi:cos(phi)]
+
+def rotate_y(v, angle_d):
+    angle_r = angle_d * pi/180
+    def _comp_rotation(v, matrix_line, angle_r):
+        return sum([v[i] * matrix_line[i](angle_r) for i in range(3)])
+    
+    return tuple([_comp_rotation(v, y_rotation_matrix[i*3:i*3+3], angle_r) for i in range(3)])
 
 
 
@@ -68,7 +86,9 @@ class PathListener(sf.FrameListener):
         self.last_t = 0.0
 
         self.vars = {"x":None, "y":None, "z":None}
-        
+
+        self.angle = 0
+        self.index = 0
         
 
     def frameStarted(self, frameEvent):
@@ -77,7 +97,7 @@ class PathListener(sf.FrameListener):
         self.timeLapse += frameEvent.timeSinceLastFrame 
 
 
-        if self.timeLapse > 1:
+        if self.timeLapse >= 1:
             print "*** Begin line update"
             self.timeLapse = 0.0
             manual_object = self.dynamic_line["manual_object"]
@@ -86,13 +106,20 @@ class PathListener(sf.FrameListener):
             last_point = self.dynamic_line["vertices"][last_index]
 
 
-            new_point = add_vectors(last_point,
-                                    (3*random.uniform(-1, 1),
-                                     #random.uniform(-1, 1),
-                                     0,
-                                     3*random.uniform(-1, 1)))
+            #new_point = add_vectors(last_point,
+            #                        (3*random.uniform(-1, 1),
+            #                         #random.uniform(-1, 1),
+            #                         0,
+            #                         3*random.uniform(-1, 1)))
 
+            
+            #new_point = add_vectors(last_point, rotate_y([1, 0, 1], self.angle))
+            #self.angle += 10
 
+            new_point = (self.index, 0, (1,-1)[self.index%2])
+            self.index += 1
+
+            print "*** New point : ", new_point
 
             self.dynamic_line["vertices"].append(new_point)
 
@@ -107,20 +134,18 @@ class PathListener(sf.FrameListener):
 
 
 
-            self.p = new_point#add_vectors(self.p_old, new_point)  #(random.randint(-2, 2), random.randint(-2, 2)))
+            self.p = new_point
 
-            self.v_p = add_vectors(self.v_old, (random.uniform(-1,1)/100, 0, random.uniform(-1,1)/100))
+            self.v_p = (0.5, (0.5,-0.5)[self.index%2])
+            #self.v_p = add_vectors(self.v_old, (random.uniform(-1,1)/100, 0, random.uniform(-1,1)/100))
             self.a_p = (0,0,0)
 
-            points = self._predict_points(self.p_old, self.v_old, self.p, self.v_p, self.a_p, 1.0)
+            points = self._predict_points(self.p_old, self.v_old, self.p, (-self.v_p[0], 0, -self.v_p[1]), self.a_p, 1.0)
 
             self._update_spline_parameters(points)
-            #plot(*make_spline(points, 100))
-            self.p_old, self.v_old = points[3], (-self.v_p[0], 0, -self.v_p[1]) #derive(points[3], points[2], 1.0)
+            self.p_old, self.v_old = points[3], (self.v_p[0], 0, self.v_p[1]) #derive(points[3], points[2], 1.0)
 
 
-
-            
             self.current_t = 0.0
 
             
@@ -149,22 +174,6 @@ class PathListener(sf.FrameListener):
             #print self.current_pos
 
         return True
-
-
-    def _eval_mrua(self, last_pos, v, a):
-        t = self.current_t - self.last_t
-        return (last_pos[0] + v[0] * t + 0.5 * a[0] * t**2,
-                0,
-                last_pos[2] + v[2] * t + 0.5 * a[2] * t**2)
-                                            
-
-    def _get_speed_vector(self, last_point, new_point):
-        return tuple(map(operator.sub, new_point, last_point))
-
-
-    def _get_accel_vector(self, last_speed, new_speed):
-        return tuple(map(operator.sub, new_speed, last_speed))
-
 
 
     def _update_spline_parameters(self, points):
@@ -442,6 +451,15 @@ class Application(sf.Application):
         self.dynamic_line["manual_object"] = dynamic_line_object
         
         self.dynamic_line["spline_object"] =  self.sceneManager.createManualObject("Dynamic Spline")
+
+
+        spline_object = self.dynamic_line["spline_object"]
+        spline_object.begin("Objects/Spline", ogre.RenderOperation.OT_LINE_STRIP)
+        spline_object.position(0,0,0)
+        spline_object.colour(0, 0, 0)            
+        spline_object.end()
+
+        
         self.line_node.attachObject(self.dynamic_line["spline_object"])
         
 

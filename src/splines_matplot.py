@@ -9,9 +9,26 @@ from pylab import *
 import numpy as N
 
 
+
+rotation_matrix = [lambda phi:cos(phi) , lambda phi:sin(phi),
+                   lambda phi:-sin(phi), lambda phi:cos(phi)]
+
+def rotate(v, angle):
+    angle = angle * pi/180
+    def _comp_rotation(v, matrix_line, angle):
+        return sum([v[i] * matrix_line[i](angle) for i in range(2)])
+    
+    return (_comp_rotation(v, rotation_matrix[0:2], angle),
+            _comp_rotation(v, rotation_matrix[2:4], angle))
+    #return tuple([_comp_rotation(v, rotation_matrix[i*2:i*2+2], angle) for i in range(2)])
+
+
+
 def cubic_spline_F(t, (A, B, C, D)):
 	return A*t**3 + B*t**2 + C*t + D
 
+def cubic_spline_derived(t, (A, B, C, D)):
+	return 3*A*t**2 + 2*B*t + C
 
 def spline_params_from_points(c0, c1, c2, c3):
 	return (c3 - 3*c2 + 3*c1 - c0,
@@ -128,23 +145,25 @@ def main():
 
 def main2():
     std_rand.seed()
-    p_old, v_old = (0,0), (0.2, 0.2)
+    p_old, v_old = (0,0), (1.0, 1.0)
     
     for i in range(5):
-        p = add_vectors(p_old, (std_rand.randint(-2, 2), std_rand.randint(-2, 2)))
+        p = add_vectors(p_old, (std_rand.randint(-1, 1), std_rand.randint(-1, 1)))
+        
         v_p = (std_rand.random(), std_rand.random())
+        #v_p = rotate(mul_vector(v_old, std_rand.uniform(-0.7,0.7)), std_rand.uniform(-15,15))
+        
         
         a_p = (0,0)
-        points = predict_points(p_old, v_old, p, (-v_p[0], -v_p[1]), a_p, 0.5)
+        points = predict_points(p_old, v_old, p, (-v_p[0], -v_p[1]), a_p, 1.0)
         #plot_points(points)
         plot(*make_spline(points, 100))
         
-        for p in points:
-            print "(%.1f, %.1f)" % p
-            
-        print
-        #p_old, v_old = points[3], derive(points[3], points[2], 1)
-        p_old, v_old = p, v_p#(-v_p[0], -v_p[1])
+        #for p in points:
+        #    print "(%.1f, %.1f)" % p
+        #print
+        
+        p_old, v_old = p, v_p
     
 
 def main3():
@@ -155,8 +174,8 @@ def main3():
     
     p_old, v_old = updates[0]
     
-    for (i, up) in enumerate(updates[1:]):
-        p, v_p = up
+    for (i, update) in enumerate(updates[1:]):
+        p, v_p = (update[0], mul_vector(update[1], 1))
         a_p = (0,0)
         points = predict_points(p_old, v_old, p, v_p, a_p, 1.0)
         plot_points(points)
