@@ -90,6 +90,7 @@ class PathListener(sf.FrameListener):
         self.angle = 0
         self.index = 0
         
+        
 
     def frameStarted(self, frameEvent):
         if( sf.FrameListener.frameStarted(self, frameEvent) == False ):
@@ -106,17 +107,17 @@ class PathListener(sf.FrameListener):
             last_point = self.dynamic_line["vertices"][last_index]
 
 
-            #new_point = add_vectors(last_point,
-            #                        (3*random.uniform(-1, 1),
-            #                         #random.uniform(-1, 1),
-            #                         0,
-            #                         3*random.uniform(-1, 1)))
+            new_point = add_vectors(last_point,
+                                    (3*random.uniform(-1, 1),
+                                     #random.uniform(-1, 1),
+                                     0,
+                                     3*random.uniform(-1, 1)))
 
             
             #new_point = add_vectors(last_point, rotate_y([1, 0, 1], self.angle))
             #self.angle += 10
 
-            new_point = (self.index, 0, (1,-1)[self.index%2])
+            #new_point = (self.index, 0, (1,-1)[self.index%2])
             self.index += 1
 
             print "*** New point : ", new_point
@@ -136,8 +137,8 @@ class PathListener(sf.FrameListener):
 
             self.p = new_point
 
-            self.v_p = (0.5, (0.5,-0.5)[self.index%2])
-            #self.v_p = add_vectors(self.v_old, (random.uniform(-1,1)/100, 0, random.uniform(-1,1)/100))
+            #self.v_p = (0.5, (0.5,-0.5)[self.index%2])
+            self.v_p = add_vectors(self.v_old, (random.uniform(-1,1)/100, 0, random.uniform(-1,1)/100))
             self.a_p = (0,0,0)
 
             points = self._predict_points(self.p_old, self.v_old, self.p, (-self.v_p[0], 0, -self.v_p[1]), self.a_p, 1.0)

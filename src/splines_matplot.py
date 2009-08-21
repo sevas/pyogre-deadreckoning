@@ -192,6 +192,58 @@ def main3():
     
 
 
+
+
+def unpack(line):
+    pos = [float(elem.strip("()")) for elem in line.split(" ")[4:10:2]]
+    speed = [float(elem.strip("()\n")) for elem in line.split(" ")[12:18:2]]
+    return ((pos[0], pos[2]), (speed[0], speed[2]))
+
+def unpack2(line):
+    pos =  [float(elem.strip("()")) for elem in line.split(" ")[4:10:2]]
+    speed = [float(elem.strip("()")) for elem in line.split(" ")[10:15:2]]
+    dt = float(line.split(" ")[16].strip())
+    return ((pos[0], pos[2]), (speed[0], speed[2]), dt)
+
+
+def main4():
+    lines = open("network_receiver.log").readlines()[:-1]
+    
+    p_old, v_old = unpack(lines[0])
+    print p_old, v_old
+    
+    for l in lines[1:20]:
+        p, v_p = unpack(l)
+        print p, v_p
+        v_p = v_p[0]*125, v_p[1]*125
+        a_p = (0,0)
+        points = predict_points(p_old, v_old, p, (-v_p[0], -v_p[1]), a_p, 1.0)
+        #print points
+        #plot_points(points)
+        plot(*make_spline(points, 100))
+        p_old, v_old = p, v_p
+    
+    
+def main5():
+    lines = open("network.log").readlines()[:-1]
+    
+    p_old, v_old, dt = unpack2(lines[0])
+    print p_old, v_old, dt
+    
+    for l in lines:
+        p, v_p, dt = unpack2(l)
+        print v_p, dt
+        v_p = v_p[0] * (dt*100000), v_p[1]* (dt*100000)
+        
+        a_p = (0,0)
+        
+        points = predict_points(p_old, v_old, p, (-v_p[0], -v_p[1]), a_p, 1.0)
+        #print points
+        #plot_points(points)
+        plot(*make_spline(points, 100))
+        p_old, v_old = p, v_p
+    
+    
+
 if __name__=="__main__":
-    #main()
-    main2()
+    main5()
